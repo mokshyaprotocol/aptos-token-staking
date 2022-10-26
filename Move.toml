@@ -1,7 +1,10 @@
 [package]
-name = 'aptos-token-staking'
+name = 'mokshya-staking'
 version = '1.0.0'
-[dependencies.AptosFramework]
-git = 'https://github.com/aptos-labs/aptos-core.git'
-rev = 'main'
-subdir = 'aptos-move/framework/aptos-framework'
+
+[addresses]
+mokshya-staking = "0x09137b2e0da0c07c2f069bcbec1720f7b6020dcc1518d35b641955e7d1d36a02"
+Std = "0x1"
+[dependencies]
+AptosFramework = { local = "/Users/samundrakarki/aptos-core/aptos-move/framework/aptos-framework" }
+AptosToken = { local = "/Users/samundrakarki/aptos-core/aptos-move/framework/aptos-token" }
