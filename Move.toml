@@ -3,7 +3,7 @@ name = 'mokshya-staking'
 version = '1.0.0'
 
 [addresses]
-mokshya-staking = "0x09137b2e0da0c07c2f069bcbec1720f7b6020dcc1518d35b641955e7d1d36a02"
+mokshya-staking = "0x15a431e09de35f3a9b14f8f46d19de460ce3d2406874d5429310feb86bd9c889"
 Std = "0x1"
 [dependencies]
 AptosFramework = { local = "/Users/samundrakarki/aptos-core/aptos-move/framework/aptos-framework" }
