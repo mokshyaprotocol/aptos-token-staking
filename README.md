@@ -17,10 +17,9 @@ aptos move test
  aptos move publish --named-addresses mokshyastaking::tokenstaking=your_address
 ```
 Copy the account address and replace in tests/staking.ts
+# Set Up
 ```javascript
 import {AptosClient, AptosAccount, FaucetClient, TxnBuilderTypes} from "aptos";
-
-#reate Staking
 
 const NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const FAUCET_URL = "https://faucet.devnet.aptoslabs.com";
@@ -28,6 +27,9 @@ const FAUCET_URL = "https://faucet.devnet.aptoslabs.com";
 const account1 = new AptosAccount();
 // Staker Account
 const account2 = new AptosAccount();
+```
+# Create Staking
+```javascript
 const create_staking_payloads = {
       type: "entry_function_payload",
       function: "0xf40bb98bf343e6c091af235e2e4b1953b38919f266ce10a091dfeae8b06f3f9e::tokenstaking::create_staking",
@@ -39,21 +41,6 @@ const create_staking_payloads = {
     let bcsTxn = AptosClient.generateBCSTransaction(account1, txnRequest);
     await client.submitSignedBCSTransaction(bcsTxn);
 
-```
-
-# Create Whitelist
-```javascript
-const whitelist_list = [] //add all the addresses you want to whitelist.
-const create_whitelist_payloads = {
-  type: "entry_function_payload",
-  function: pid+"::candymachine::create_whitelist",
-  type_arguments: [],
-  arguments: [getresourceAccount['changes'][2]['address'],whitelist_list,any_random_number],
-};
-txnRequest = await client.generateTransaction(alice.address(), create_whitelist_payloads);
-bcsTxn = AptosClient.generateBCSTransaction(alice, txnRequest);
-transactionRes = await client.submitSignedBCSTransaction(bcsTxn);
-console.log("Whitelist created: "+transactionRes.hash)
 ```
 # Stake Token
 ```javascript
