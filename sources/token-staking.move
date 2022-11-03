@@ -45,10 +45,6 @@ module mokshyastaking::tokenstaking
     struct ResourceInfo has key {
         resource_map: SimpleMap< String,address>,
     }
-    struct MINT has key
-    {
-        nft_set:vector<u8>,
-    }
     const ENO_NO_COLLECTION:u64=0;
     const ENO_STAKING_EXISTS:u64=1;
     const ENO_NO_STAKING:u64=2;
@@ -59,7 +55,6 @@ module mokshyastaking::tokenstaking
     const ENO_INSUFFICIENT_FUND:u64=7;
     const ENO_INSUFFICIENT_TOKENS:u64=7;
 
-    const DERIVE_RESOURCE_ACCOUNT_SCHEME: u8 = 255;
 
     //Functions    
     //Function for creating and modifying staking
