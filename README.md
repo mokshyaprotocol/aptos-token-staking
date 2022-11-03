@@ -1,6 +1,6 @@
-Candy machine smart contract for Aptos Blockchain.
+Aptos Token Staking Contract
 
-# Deploy contract
+# Init
 
 ```
 aptos init
