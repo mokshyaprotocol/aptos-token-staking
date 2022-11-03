@@ -1,4 +1,3 @@
 build/
 .aptos
 node_modules
-tests
