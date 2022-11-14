@@ -2,9 +2,13 @@
 name = 'mokshya-staking'
 version = '1.0.0'
 
+
 [addresses]
-mokshyastaking = "0xf40bb98bf343e6c091af235e2e4b1953b38919f266ce10a091dfeae8b06f3f9e"
+mokshyastaking = "_"
 Std = "0x1"
+aptos_std = "0x1"
+
 [dependencies]
-AptosFramework = { local = "/Users/cryptordx/aptos-core/aptos-move/framework/aptos-framework" }
-AptosToken = { local = "/Users/cryptordx/aptos-core/aptos-move/framework/aptos-token" }
+AptosFramework = { local = "../../aptos-core/aptos-move/framework/aptos-framework"}
+AptosToken = { local = "../../aptos-core/aptos-move/framework/aptos-token" }
+AptosStdlib = { local = "../../aptos-core/aptos-move/framework/aptos-stdlib" }
