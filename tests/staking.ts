@@ -8,6 +8,8 @@ const FAUCET_URL = process.env.APTOS_FAUCET_URL || "https://faucet.devnet.aptosl
 
 const client = new AptosClient(NODE_URL);
 const faucetClient = new FaucetClient(NODE_URL, FAUCET_URL);
+//pid
+const pid="0x16bc6ca315f9203a9c090ce9bf5c23366e6dbc819e4c3efe96de0fcaecb42f01";
 // Creator Account
 const account1 = new AptosAccount();
 // Staker Account
@@ -43,7 +45,8 @@ const tokenClient = new TokenClient(client); // <:!:section_1b
     };
     let txnRequest = await client.generateTransaction(account1.address(), create_collection_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account1, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
 
   });
   it ("Create Token", async () => {
@@ -60,7 +63,8 @@ const tokenClient = new TokenClient(client); // <:!:section_1b
     };
     let txnRequest = await client.generateTransaction(account1.address(), create_token_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account1, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   });
   it ("Opt In Transfer ", async () => {
     await faucetClient.fundAccount(account2.address(), 1000000000);//Airdropping
@@ -72,7 +76,8 @@ const tokenClient = new TokenClient(client); // <:!:section_1b
     };
     let txnRequest = await client.generateTransaction(account2.address(), create_token_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   });
   it ("Transfer Token ", async () => {
     const create_token_payloads = {
@@ -83,55 +88,86 @@ const tokenClient = new TokenClient(client); // <:!:section_1b
     };
     let txnRequest = await client.generateTransaction(account1.address(), create_token_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account1, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   
   });
   it ("Create Staking", async () => {
     const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0xf40bb98bf343e6c091af235e2e4b1953b38919f266ce10a091dfeae8b06f3f9e::tokenstaking::create_staking",
+      function: pid+"::tokenstaking::create_staking",
       type_arguments: ["0x1::aptos_coin::AptosCoin"],
-      arguments: [BigInt(1),collection,BigInt(10)
+      arguments: [86400,collection,1000000
       ],
     };
     let txnRequest = await client.generateTransaction(account1.address(), create_staking_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account1, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   });
   it ("Stake Token", async () => {
     const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0xf40bb98bf343e6c091af235e2e4b1953b38919f266ce10a091dfeae8b06f3f9e::tokenstaking::stake_token",
+      function: pid+"::tokenstaking::stake_token",
       type_arguments: [],
       arguments: [account1.address(),collection,tokenname,tokenPropertyVersion,BigInt(1)
       ],
     };
     let txnRequest = await client.generateTransaction(account2.address(), create_staking_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   });
   it ("Get Reward", async () => {
     const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0xf40bb98bf343e6c091af235e2e4b1953b38919f266ce10a091dfeae8b06f3f9e::tokenstaking::claim_reward",
+      function:pid+"::tokenstaking::claim_reward",
       type_arguments: ["0x1::aptos_coin::AptosCoin"],
       arguments: [collection,tokenname,account1.address()
       ],
     };
     let txnRequest = await client.generateTransaction(account2.address(), create_staking_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   });
   it ("Unstake Token", async () => {
     const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0xf40bb98bf343e6c091af235e2e4b1953b38919f266ce10a091dfeae8b06f3f9e::tokenstaking::unstake_token",
+      function: pid+"::tokenstaking::unstake_token",
       type_arguments: ["0x1::aptos_coin::AptosCoin"],
-      arguments: [account1.address(),collection,tokenname,tokenPropertyVersion,1
+      arguments: [account1.address(),collection,tokenname,tokenPropertyVersion
       ],
     };
     let txnRequest = await client.generateTransaction(account2.address(), create_staking_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
-    await client.submitSignedBCSTransaction(bcsTxn);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
+  });
+  it ("Re-Stake Token", async () => {
+    const create_staking_payloads = {
+      type: "entry_function_payload",
+      function: pid+"::tokenstaking::stake_token",
+      type_arguments: [],
+      arguments: [account1.address(),collection,tokenname,tokenPropertyVersion,BigInt(1)
+      ],
+    };
+    let txnRequest = await client.generateTransaction(account2.address(), create_staking_payloads);
+    let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
+  });
+  it ("Get Reward", async () => {
+    const create_staking_payloads = {
+      type: "entry_function_payload",
+      function: pid+"::tokenstaking::claim_reward",
+      type_arguments: ["0x1::aptos_coin::AptosCoin"],
+      arguments: [collection,tokenname,account1.address()
+      ],
+    };
+    let txnRequest = await client.generateTransaction(account2.address(), create_staking_payloads);
+    let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
+    let hash=await client.submitSignedBCSTransaction(bcsTxn);
+    console.log(hash);
   });
   });
