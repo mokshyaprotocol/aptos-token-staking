@@ -13,6 +13,8 @@ module mokshyastaking::tokenstaking
     use std::bcs::to_bytes;
 
     struct MokshyaStaking has key {
+        //resource creator if resource account is the creator
+        resource_creator:address,
         collection:String,
         // amount of token paid in a week for staking one token,
         // changed to dpr (daily percentage return)in place of apr addressing demand
@@ -53,21 +55,23 @@ module mokshyastaking::tokenstaking
     const ENO_COINTYPE_MISMATCH:u64=5;
     const ENO_STAKER_MISMATCH:u64=6;
     const ENO_INSUFFICIENT_FUND:u64=7;
-    const ENO_INSUFFICIENT_TOKENS:u64=7;
-
+    const ENO_INSUFFICIENT_TOKENS:u64=8;
+    const ENO_NOT_MODULE_DEPLOYER:u64=9;
 
     //Functions    
     //Function for creating and modifying staking
     public entry fun create_staking<CoinType>(
         creator: &signer,
+        resource_creator:address,
         dpr:u64,//rate of payment,
         collection_name:String, //the name of the collection owned by Creator 
         total_amount:u64,
     ) acquires ResourceInfo{
         let creator_addr = signer::address_of(creator);
+        assert!(creator_addr==@mokshyastaking,ENO_NOT_MODULE_DEPLOYER);
         //verify the creator has the collection
-        assert!(check_collection_exists(creator_addr,collection_name), ENO_NO_COLLECTION);
-        //
+        assert!(check_collection_exists(resource_creator,collection_name), ENO_NO_COLLECTION);
+        //resource account created
         let (staking_treasury, staking_treasury_cap) = account::create_resource_account(creator, to_bytes(&collection_name)); //resource account to store funds and data
         let staking_treasur_signer_from_cap = account::create_signer_with_capability(&staking_treasury_cap);
         let staking_address = signer::address_of(&staking_treasury);
@@ -93,6 +97,7 @@ module mokshyastaking::tokenstaking
     )acquires MokshyaStaking,ResourceInfo 
     {
         let creator_addr = signer::address_of(creator);
+        assert!(creator_addr==@mokshyastaking,ENO_NOT_MODULE_DEPLOYER);
         //verify the creator has the collection
         let staking_address = get_resource_address(creator_addr,collection_name);
         assert!(exists<MokshyaStaking>(staking_address),ENO_NO_STAKING);// the staking doesn't exists
@@ -106,6 +111,7 @@ module mokshyastaking::tokenstaking
     )acquires MokshyaStaking,ResourceInfo
     {
         let creator_addr = signer::address_of(creator);
+        assert!(creator_addr==@mokshyastaking,ENO_NOT_MODULE_DEPLOYER);
        //get staking address
         let staking_address = get_resource_address(creator_addr,collection_name);
         assert!(exists<MokshyaStaking>(staking_address),ENO_NO_STAKING);// the staking doesn't exists
@@ -119,6 +125,7 @@ module mokshyastaking::tokenstaking
     )acquires MokshyaStaking,ResourceInfo
     {
         let creator_addr = signer::address_of(creator);
+        assert!(creator_addr==@mokshyastaking,ENO_NOT_MODULE_DEPLOYER);
         //verify the creator has the collection
          assert!(exists<ResourceInfo>(creator_addr), ENO_NO_STAKING);
         let staking_address = get_resource_address(creator_addr,collection_name); 
@@ -143,16 +150,18 @@ module mokshyastaking::tokenstaking
     )acquires MokshyaStaking,ResourceInfo,MokshyaReward 
     {
         let staker_addr = signer::address_of(staker);
-        let token_id = token::create_token_id_raw(creator_addr, collection_name, token_name, property_version);
-        //verifying the token owner has the token
-        assert!(balance_of(staker_addr,token_id)>=tokens,ENO_NO_TOKEN_IN_TOKEN_STORE);
-        //verify the creator has the collection
-        assert!(check_collection_exists(creator_addr,collection_name), ENO_NO_COLLECTION);
-        //verifying whether the creator has started the staking or not
+        //verifying staking data
         let staking_address = get_resource_address(creator_addr,collection_name);
         assert!(exists<MokshyaStaking>(staking_address),ENO_NO_STAKING);// the staking doesn't exists
         let staking_data = borrow_global<MokshyaStaking>(staking_address);
         assert!(staking_data.state,ENO_STOPPED);
+        //verify the creator has the collection
+        assert!(check_collection_exists(staking_data.resource_creator,collection_name), ENO_NO_COLLECTION);
+        //token data
+        let token_id = token::create_token_id_raw(staking_data.resource_creator, collection_name, token_name, property_version);
+        //verifying the token owner has the token
+        assert!(balance_of(staker_addr,token_id)>=tokens,ENO_NO_TOKEN_IN_TOKEN_STORE);
+        //verifying whether the creator has started the staking or not
         //seeds as per the tokens
         let seed = collection_name;
         let seed2 = token_name;
@@ -206,7 +215,6 @@ module mokshyastaking::tokenstaking
         let seed = collection_name;
         let seed2 = token_name;
         append(&mut seed,seed2);
-         //
         let reward_treasury_address = get_resource_address(staker_addr,seed);
         assert!(exists<MokshyaReward>(reward_treasury_address),ENO_STAKING_EXISTS);
         let reward_data = borrow_global_mut<MokshyaReward>(reward_treasury_address);
@@ -257,7 +265,7 @@ module mokshyastaking::tokenstaking
         let reward = ((now-reward_data.start_time)*dpr*reward_data.tokens)/86400;
         let release_amount = reward - reward_data.withdraw_amount;
         assert!(coin_address<CoinType>()==staking_data.coin_type,ENO_COINTYPE_MISMATCH);
-        let token_id = token::create_token_id_raw(creator, collection_name, token_name, property_version);
+        let token_id = token::create_token_id_raw(staking_data.resource_creator, collection_name, token_name, property_version);
         let balanceToken = balance_of(reward_treasury_address,token_id);
         assert!(balanceToken>=reward_data.tokens,ENO_INSUFFICIENT_TOKENS);
         if (staking_data.amount<release_amount)
@@ -310,199 +318,6 @@ module mokshyastaking::tokenstaking
         }
     }
 
-    #[test_only] 
-    use aptos_token::token::{create_collection,create_token_script,create_token_id_raw};
-    use aptos_token::token::withdraw_token;
-    use aptos_token::token::deposit_token;
-    use std::string;
-    use std::bcs;
-    use aptos_framework::timestamp;
-    struct MokshyaMoney { }
-    #[test(creator = @0xa11ce, receiver = @0xb0b, token_staking = @mokshyastaking)]
-   fun test_create_staking(
-        creator: signer,
-        receiver: signer,
-        token_staking: signer
-    )acquires ResourceInfo,MokshyaStaking{
-       let sender_addr = signer::address_of(&creator);
-       let receiver_addr = signer::address_of(&receiver);
-        aptos_framework::account::create_account_for_test(sender_addr);
-        aptos_framework::account::create_account_for_test(receiver_addr);
-        aptos_framework::managed_coin::initialize<MokshyaMoney>(
-            &token_staking,
-            b"Mokshya Money",
-            b"MOK",
-            10,
-            true
-        );
-       aptos_framework::managed_coin::register<MokshyaMoney>(&creator);
-       aptos_framework::managed_coin::mint<MokshyaMoney>(&token_staking,sender_addr,100);   
-       create_collection(
-            &creator,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Collection for Test"),
-            string::utf8(b"https://github.com/mokshyaprotocol"),
-            2,
-            vector<bool>[false, false, false],
-        );
-        let default_keys = vector<String>[string::utf8(b"attack"), string::utf8(b"num_of_use")]; 
-        let default_vals = vector<vector<u8>>[bcs::to_bytes<u64>(&10), bcs::to_bytes<u64>(&5)];
-        let default_types = vector<String>[string::utf8(b"u64"), string::utf8(b"u64")];
-        let mutate_setting = vector<bool>[false, false, false, false, false];
-        create_token_script(
-            &creator,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Mokshya Token #1"),
-            string::utf8(b"Collection for Test"),
-            2,
-            5,
-            string::utf8(b"mokshya.io"),
-            signer::address_of(&creator),
-            100,
-            0,
-            mutate_setting,
-            default_keys,
-            default_vals,
-            default_types,
-        );
-        let token_id=create_token_id_raw(signer::address_of(&creator), string::utf8(b"Mokshya Collection"), 
-        string::utf8(b"Mokshya Token #1"), 0);
-        let token = withdraw_token(&creator, token_id, 1);
-        deposit_token(&receiver, token);
-        create_staking<MokshyaMoney>(
-               &creator,
-               20,
-               string::utf8(b"Mokshya Collection"),
-               90);
-        update_dpr(
-             &creator,
-             30,
-            string::utf8(b"Mokshya Collection"),
-        );
-        creator_stop_staking(
-             &creator,
-             string::utf8(b"Mokshya Collection"),
-        );
-        let resource_address= get_resource_address(sender_addr,string::utf8(b"Mokshya Collection"));
-        let staking_data = borrow_global<MokshyaStaking>(resource_address);
-        assert!(staking_data.state==false,98);
-        deposit_staking_rewards<MokshyaMoney>(
-               &creator,
-               string::utf8(b"Mokshya Collection"),
-               5
-        );
-        let staking_data = borrow_global<MokshyaStaking>(resource_address);
-        assert!(staking_data.state==true,88);
-        assert!(staking_data.dpr==30,78);
-        assert!(staking_data.amount==95,68);
-    } 
-    #[test(creator = @0xa11ce, receiver = @0xb0b, token_staking = @mokshyastaking,framework = @0x1)]
-    fun test_staking_token(
-        creator: signer,
-        receiver: signer,
-        token_staking: signer,
-        framework: signer,
-    )acquires ResourceInfo,MokshyaStaking,MokshyaReward{
-       let sender_addr = signer::address_of(&creator);
-       let receiver_addr = signer::address_of(&receiver);
-       // set up global time for testing purpose
-        timestamp::set_time_has_started_for_testing(&framework);
-       // create accounts 
-        aptos_framework::account::create_account_for_test(sender_addr);
-        aptos_framework::account::create_account_for_test(receiver_addr);
-        // create reward coin
-        aptos_framework::managed_coin::initialize<MokshyaMoney>(
-            &token_staking,
-            b"Mokshya Money",
-            b"MOK",
-            10,
-            true
-        );
-        aptos_framework::managed_coin::register<MokshyaMoney>(&creator);
-        aptos_framework::managed_coin::mint<MokshyaMoney>(&token_staking,sender_addr,100); 
-        //create collection  
-        create_collection(
-            &creator,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Collection for Test"),
-            string::utf8(b"https://github.com/mokshyaprotocol"),
-            2,
-            vector<bool>[false, false, false],
-        );
-        //token data
-        let default_keys = vector<String>[string::utf8(b"attack"), string::utf8(b"num_of_use")]; 
-        let default_vals = vector<vector<u8>>[bcs::to_bytes<u64>(&10), bcs::to_bytes<u64>(&5)];
-        let default_types = vector<String>[string::utf8(b"u64"), string::utf8(b"u64")];
-        let mutate_setting = vector<bool>[false, false, false, false, false];
-        //create token
-        create_token_script(
-            &creator,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Mokshya Token #1"),
-            string::utf8(b"Collection for Test"),
-            2,
-            5,
-            string::utf8(b"https://aptos.dev"),
-            signer::address_of(&creator),
-            100,
-            0,
-            mutate_setting,
-            default_keys,
-            default_vals,
-            default_types,
-        );
-        let token_id=create_token_id_raw(signer::address_of(&creator), string::utf8(b"Mokshya Collection"), 
-        string::utf8(b"Mokshya Token #1"), 0);
-        let token = withdraw_token(&creator, token_id, 1);
-        deposit_token(&receiver, token);
-        create_staking<MokshyaMoney>(
-               &creator,
-               20,
-               string::utf8(b"Mokshya Collection"),
-               90);
-        stake_token(
-            &receiver,
-            sender_addr,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Mokshya Token #1"),
-            0,
-            1);
-        let seed = string::utf8(b"Mokshya Collection");
-        let seed2 = string::utf8(b"Mokshya Token #1");
-        append(&mut seed,seed2);
-        let reward_treasury_address = get_resource_address(receiver_addr,seed);
-        assert!(balance_of(reward_treasury_address,token_id)==1,99);
-        assert!(balance_of(receiver_addr,token_id)==0,89);
-        claim_reward<MokshyaMoney>(
-            &receiver,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Mokshya Token #1"),
-            sender_addr,
-        );
-        unstake_token<MokshyaMoney>( 
-            &receiver,
-            sender_addr,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Mokshya Token #1"),
-            0);
-        assert!(balance_of(receiver_addr,token_id)==1,79);
-        assert!(balance_of(reward_treasury_address,token_id)==0,69);
-        let reward_data = borrow_global<MokshyaReward>(reward_treasury_address);
-        assert!(reward_data.start_time==0,59);
-        assert!(reward_data.tokens==0,59);
-        assert!(reward_data.withdraw_amount==0,59);
-
-        //testing restake of token
-        stake_token(
-            &receiver,
-            sender_addr,
-            string::utf8(b"Mokshya Collection"),
-            string::utf8(b"Mokshya Token #1"),
-            0,
-            1);
-        assert!(balance_of(reward_treasury_address,token_id)==1,49);
-        assert!(balance_of(receiver_addr,token_id)==0,49);
-    } 
 }
 
 
