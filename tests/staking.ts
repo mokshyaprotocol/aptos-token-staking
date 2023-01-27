@@ -9,7 +9,7 @@ const FAUCET_URL = process.env.APTOS_FAUCET_URL || "https://faucet.devnet.aptosl
 const client = new AptosClient(NODE_URL);
 const faucetClient = new FaucetClient(NODE_URL, FAUCET_URL);
 //pid
-const pid="0x16bc6ca315f9203a9c090ce9bf5c23366e6dbc819e4c3efe96de0fcaecb42f01";
+const pid="0xb96f8e38894d0e6310f846fb29b661015b510816859d1600f239b45bf14dfea0";
 // Creator Account
 const account1 = new AptosAccount();
 // Staker Account

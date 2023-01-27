@@ -32,7 +32,7 @@ const account2 = new AptosAccount();
 ```javascript
 const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0x16bc6ca315f9203a9c090ce9bf5c23366e6dbc819e4c3efe96de0fcaecb42f01::tokenstaking::create_staking",
+      function: "0xb96f8e38894d0e6310f846fb29b661015b510816859d1600f239b45bf14dfea0::tokenstaking::create_staking",
       type_arguments: ["0x1::aptos_coin::AptosCoin"],
       arguments: [BigInt(1),collection,BigInt(10)
       ],
@@ -46,7 +46,7 @@ const create_staking_payloads = {
 ```javascript
  const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0x16bc6ca315f9203a9c090ce9bf5c23366e6dbc819e4c3efe96de0fcaecb42f01::tokenstaking::stake_token",
+      function: "0xb96f8e38894d0e6310f846fb29b661015b510816859d1600f239b45bf14dfea0::tokenstaking::stake_token",
       type_arguments: [],
       arguments: [account1.address(),collection,tokenname,tokenPropertyVersion,BigInt(1)
       ],
@@ -59,7 +59,7 @@ const create_staking_payloads = {
 ```javascript
  const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0x16bc6ca315f9203a9c090ce9bf5c23366e6dbc819e4c3efe96de0fcaecb42f01::tokenstaking::claim_reward",
+      function: "0xb96f8e38894d0e6310f846fb29b661015b510816859d1600f239b45bf14dfea0::tokenstaking::claim_reward",
       type_arguments: ["0x1::aptos_coin::AptosCoin"],
       arguments: [collection,tokenname,account1.address()
       ],
@@ -72,7 +72,7 @@ const create_staking_payloads = {
 ```javascript
 const create_staking_payloads = {
       type: "entry_function_payload",
-      function: "0x16bc6ca315f9203a9c090ce9bf5c23366e6dbc819e4c3efe96de0fcaecb42f01::tokenstaking::unstake_token",
+      function: "0xb96f8e38894d0e6310f846fb29b661015b510816859d1600f239b45bf14dfea0::tokenstaking::unstake_token",
       type_arguments: ["0x1::aptos_coin::AptosCoin"],
       arguments: [account1.address(),collection,tokenname,tokenPropertyVersion
       ],
@@ -80,5 +80,10 @@ const create_staking_payloads = {
     let txnRequest = await client.generateTransaction(account2.address(), create_staking_payloads);
     let bcsTxn = AptosClient.generateBCSTransaction(account2, txnRequest);
     await client.submitSignedBCSTransaction(bcsTxn);
+
+```
+# Addresses Mainnet and Testnet
+``` 
+0xb96f8e38894d0e6310f846fb29b661015b510816859d1600f239b45bf14dfea0
 
 ```
